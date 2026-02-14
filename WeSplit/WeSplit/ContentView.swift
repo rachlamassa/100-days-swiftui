@@ -63,6 +63,7 @@ struct ContentView: View {
                 
                 Section("Total Amount") {
                     Text(totalAmount, format: .currency(code: Locale.current.currency?.identifier ?? "USD"))
+                        .foregroundStyle(tipPercentage == 0 ? .red :.primary) // Day 23 challenge: use a conditional modifier to change the total amount text view to red if the user selects a 0% tip
                 }
                 
                 Section("Amount per person") {

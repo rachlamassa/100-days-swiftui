@@ -23,6 +23,14 @@ struct ContentView: View {
     
     @State private var questionsAsked = 1
     
+    
+    // Day 23 challenge: replace the Image view used for flags with a new FlagImage() view
+    func FlagImage(_ country: String) -> some View {
+        Image(country)
+            .clipShape(.capsule)
+            .shadow(radius: 5)
+    }
+    
     var body: some View {
         ZStack {
             RadialGradient(stops: [
@@ -35,6 +43,7 @@ struct ContentView: View {
                 Text("Guess the Flag!")
                     .font(.largeTitle.bold())
                     .foregroundStyle(.white)
+                    // .titleStyle() // Day 23 challenge
                 VStack(spacing: 15) {
                     VStack {
                         Text("Tap the flag of")
@@ -48,9 +57,7 @@ struct ContentView: View {
                         Button {
                             flagTapped(number)
                         } label: {
-                            Image(countries[number])
-                                .clipShape(.capsule)
-                                .shadow(radius: 5)
+                            FlagImage(countries[number]) // Day 23 challenge
                         }
                     }
                 }
@@ -110,6 +117,21 @@ struct ContentView: View {
         questionsAsked += 1
     }
     
+}
+
+// Day 23 challenge: custom ViewModifier (and accompanying View extension) that makes a view have a large, blue font suitable for prominent titles
+struct Title: ViewModifier {
+    func body(content: Content) -> some View {
+        content
+            .font(.largeTitle)
+            .foregroundStyle(.blue)
+    }
+}
+
+extension View {
+    func titleStyle() -> some View {
+        modifier(Title())
+    }
 }
 
 #Preview {
