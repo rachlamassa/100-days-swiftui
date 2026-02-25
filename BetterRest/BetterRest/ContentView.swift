@@ -23,11 +23,32 @@ struct ContentView: View {
         components.minute = 0
         return Calendar.current.date(from: components) ?? .now
     }
+    
+    private var prediction: Date? {
+        do {
+            let config = MLModelConfiguration()
+            let model = try BetterRest(configuration: config)
+
+            let components = Calendar.current.dateComponents([.hour, .minute], from: wakeUp)
+            let hour = (components.hour ?? 0) * 60 * 60
+            let minute = (components.minute ?? 0) * 60
+
+            let prediction = try model.prediction(
+                wake: Double(hour + minute),
+                estimatedSleep: sleepAmount,
+                coffee: Double(coffeeAmount)
+            )
+
+            return wakeUp - prediction.actualSleep
+        } catch {
+            return nil
+        }
+    }
 
     var body: some View {
         NavigationStack {
             Form {
-                VStack(alignment: .leading, spacing: 0) {
+                Section { // VStack(alignment: .leading, spacing: 0)
                     Text("When do you want to wake up?")
                         .font(.headline)
                     
@@ -35,25 +56,46 @@ struct ContentView: View {
                         .labelsHidden()
                 }
                 
-                VStack(alignment: .leading, spacing: 0) {
+                Section { // VStack(alignment: .leading, spacing: 0)
                     Text("Desired amount of sleep")
                         .font(.headline)
                     
                     Stepper("\(sleepAmount.formatted()) hours", value: $sleepAmount, in: 4...12, step: 0.25)
                 }
                 
-                VStack(alignment: .leading, spacing: 0) {
+                Section { // VStack(alignment: .leading, spacing: 0)
                     Text("Daily coffee intake")
                         .font(.headline)
                     
-                    Stepper("^[\(coffeeAmount) cup](inflect:true)", value: $coffeeAmount, in: 1...20)
+                    // Stepper("^[\(coffeeAmount) cup](inflect:true)", value: $coffeeAmount, in: 1...20)
+                    
+                    Picker("^[\(coffeeAmount) cup](inflect:true)", selection: $coffeeAmount) {
+                        ForEach(1...20, id: \.self) { amount in
+                            Text("\(amount)")
+                                .tag(amount)
+                        }
+                    }
                 }
+                
+                VStack(spacing: 20) {
+                    Text("Your ideal bedtime is...")
+                        .font(.title)
+                    if let prediction {
+                        Text(prediction.formatted(date: .omitted, time: .shortened))
+                            .font(.largeTitle.bold())
+                    } else {
+                        Text("Unable to calculate your bedtime. Try again.")
+                    }
+                }
+                .frame(maxWidth: .infinity)
+                .font(.largeTitle)
+                .listRowBackground(Color.clear)
                 
                 
             }
             .navigationTitle(Text("BetterRest"))
             .toolbar {
-                Button("Calculate", action: calculateBedtime)
+                // Button("Calculate", action: calculateBedtime)
             }
             .alert(alertTitle, isPresented: $showingAlert) {
                 Button("Okay") { }
@@ -93,3 +135,4 @@ struct ContentView: View {
 #Preview {
     ContentView()
 }
+
