@@ -14,23 +14,31 @@ struct ContentView: View {
     @State private var errorTitle: String = ""
     @State private var errorMessage: String = ""
     @State private var showingError: Bool = false
+    @State private var score: Int = 0
     
     var body: some View {
         NavigationStack {
-            List {
-                Section {
-                    TextField("Enter your word", text: $newWord)
-                        .textInputAutocapitalization(.never)
-                }
-                Section {
-                    ForEach(usedWords, id: \.self) { word in
-                        HStack {
-                            Image(systemName: "\(word.count).circle")
-                            Text(word)
+            VStack {
+                List {
+                    Section {
+                        TextField("Enter your word", text: $newWord)
+                            .textInputAutocapitalization(.never)
+                    }
+                    Section {
+                        ForEach(usedWords, id: \.self) { word in
+                            HStack {
+                                Image(systemName: "\(word.count).circle")
+                                Text(word)
+                            }
                         }
                     }
                 }
+                
+                // Day 31 Challenge: track and show the player’s score for a given root word
+                Text("Score: \(score)")
+                    .font(.largeTitle.bold())
             }
+            .background(Color(.systemGroupedBackground))
             .navigationTitle(rootWord)
             .onSubmit(addNewWord)
             .onAppear(perform: startGame)
@@ -39,13 +47,21 @@ struct ContentView: View {
             } message: {
                 Text(errorMessage)
             }
+            // Day 31 Challenge: add a toolbar button that calls startGame()
+            .toolbar {
+                Button("Start new game") {
+                    startGame()
+                }
+            }
         }
     }
     
     func addNewWord() {
         let answer = newWord.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
         
-        guard answer.count > 0 else {
+        // Day 31 Challenge: disallow answers that are shorter than three letters
+        guard answer.count >= 3 else {
+            wordError(title: "Word is too short.", message: "Think again!")
             return
         }
         
@@ -68,6 +84,8 @@ struct ContentView: View {
             usedWords.insert(answer, at: 0)
         }
         
+        score += newWord.count
+        
         newWord = ""
     }
     
@@ -80,11 +98,17 @@ struct ContentView: View {
             }
         }
         
+        usedWords.removeAll()
+        score = 0
+        
         fatalError("Could not load start.txt from bundle.")
     }
     
+    // Day 31 Challenge: disallow answers that are our start word
     func isOriginal(word: String) -> Bool {
-        !usedWords.contains(word)
+        if word == rootWord { return false }
+        
+        return !usedWords.contains(word)
     }
     
     func isPossible(word: String) -> Bool {
